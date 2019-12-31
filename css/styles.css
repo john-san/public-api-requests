@@ -2,12 +2,23 @@
    Public API Request
 ======================================== */
 
-@import url('https://fonts.googleapis.com/css?family=Nunito');
-
+@import url('https://fonts.googleapis.com/css?family=Roboto&display=swap');
 * {
 	box-sizing: border-box;
 }
+/* ===================================== 
+   Variables
+======================================== */
+:root {
+	--color-primary: #4ba1cc;
+	--color-primary-light: #83c5e6;
+	--color-primary-dark: #4491b8;
+	--color-secondary: #4bcc76;
+}
 
+/* ===================================== 
+   General
+======================================== */
 html,
 body {
 	width: 100%;
@@ -15,9 +26,9 @@ body {
 }
 
 body {
-	font-family: "Nunito", sans-serif;
+	font-family: 'Roboto', sans-serif;
 	text-align: center;
-	background: rgba(235, 235, 235, 0.9);
+	background: var(--color-primary);
 }
 
 header {
@@ -98,7 +109,7 @@ header h1 {
 	max-width: 360px;
 	margin: 10px 10px 20px;
 	padding: 10px;
-	background: rgba(245, 245, 245, 0.9);
+	background: var(--color-primary-light);
 	border-radius: 0.25em;
 	border: 1px solid rgba(50, 50, 50, 0.3);
 	transition: .4s ease-out;
@@ -260,7 +271,7 @@ header h1 {
 @media (min-width: 1024px) {
 
 	.card:hover {
-		background: rgba(255, 255, 255, 1);
+		background: var(--color-primary-dark);
 		border: 1px solid rgba(50, 50, 50, 0.9);
 	}
 

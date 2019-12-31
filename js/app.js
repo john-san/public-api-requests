@@ -147,12 +147,17 @@ const createModals = (data) => {
     const modalInfoContainer = createElement('div', 'className', 'modal-info-container');
     const img = createElement('img', 'className', 'modal-img', 'src', `${employee.picture.large}`, 'alt', 'profile picture');
     const name = createElement('h3', 'id', 'name', 'className', 'modal-name cap', 'textContent', `${employee.name.first} ${employee.name.last}`);
-    const email = createElement('p', 'className', 'modal-text', 'textContent', `${employee.email}`);
+    const email = createElement('p', 'className', 'modal-text');
+    const emailLink = createElement('a', 'textContent', `${employee.email}`, 'href', `mailto:${employee.email}`);
+    email.appendChild(emailLink);
     const city = createElement('p', 'className', 'modal-text cap', 'textContent', `${employee.location.city}`);
-    const phone = createElement('p', 'className', 'modal-text', 'textContent', `${employee.cell}`);
+    const hr = document.createElement('hr');
+    const phone = createElement('p', 'className', 'modal-text');
+    const phoneLink = createElement('a', 'textContent', `${employee.cell}`, 'href', `tel:${employee.cell}`);
+    phone.appendChild(phoneLink);
     const address = createElement('p', 'className', 'modal-text', 'textContent', `${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state} ${employee.location.postcode}`); 
     const birthday = createElement('p', 'className', 'modal-text', 'textContent', 'Birthday: 10/21/2015');
-    appendMultipleChildren(modalInfoContainer, img, name, email, city, phone, address, birthday);
+    appendMultipleChildren(modalInfoContainer, img, name, email, city, hr, phone, address, birthday);
 
     const modelBtnContainer = createElement('div', 'className', 'modal-btn-container');
     const modalPrev = createElement('button', 'id', 'modal-prev', 'className', 'modal-prev-btn', 'textContent', 'Prev');
