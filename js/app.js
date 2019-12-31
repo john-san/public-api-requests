@@ -1,6 +1,14 @@
 /***  Globals ***/
 const gallery = document.getElementById('gallery');
 const body = document.querySelector('body');
+const state = {
+  dataIDStr: null,
+  dataIDNum: null,
+  filter: false,
+  lastIdx: null,
+  filterFirstIdx: null,
+  filterLastIdx: null
+};
 
 /*** General Helpers ***/
 const createElement = (el, prop, val, prop2 = null, val2 = null, prop3 = null, val3 = null, prop4 = null, val4 = null) => {
@@ -22,7 +30,6 @@ const appendMultipleChildren = (parent, ...children) => {
   children.forEach(child => parent.appendChild(child));
 }
 
-
 const createTree = (...nodes) => {
   for (let i = 0; i < nodes.length - 1; i++) {
     const parent = nodes[i];
@@ -30,6 +37,53 @@ const createTree = (...nodes) => {
     parent.appendChild(child);
   }
 }
+
+const hide = (node) => {
+  node.classList.add('hidden');
+}
+
+const show = (node) => {
+  node.classList.remove('hidden');
+}
+
+const currentModal = () => {
+  return document.querySelector(`.modal-container[data-id='${state.dataIDStr}']`);
+}
+
+/*** State Helpers  ***/
+// retrieves dataID. If not on current element, traverse up to find dataID
+const getDataID =  (target) => {
+  if (target.getAttribute('data-id')) {
+    return target.getAttribute('data-id');
+  } else if (target.parentNode.getAttribute('data-id')) {
+    return target.parentNode.getAttribute('data-id');
+  } else if (target.parentNode.parentNode.getAttribute('data-id')) {
+    return target.parentNode.parentNode.getAttribute('data-id');
+  } else if (target.parentNode.parentNode.parentNode.getAttribute('data-id')) {
+    return target.parentNode.parentNode.parentNode.getAttribute('data-id');
+  }
+}
+
+const setStateID = (dataIDStr) => {
+  state.dataIDStr =  dataIDStr;
+  state.dataIDNum = parseInt(dataIDStr);
+}
+
+const resetStateID = () => {
+  state.dataIDStr =  null;
+  state.dataIDNum = null;
+}
+
+const incrementStateID = () => {
+  state.dataIDNum += 1;
+  state.dataIDStr = state.dataIDNum.toString();
+}
+
+const decrementStateID = () => {
+  state.dataIDNum -= 1;
+  state.dataIDStr = state.dataIDNum.toString();
+}
+
 
 /***  API Usage ***/
 function fetchData(url) {
@@ -49,6 +103,7 @@ function checkStatus(response) {
 
 fetchData('https://randomuser.me/api/?nat=us&results=12')
   .then(data => {
+    state.lastIdx = data.results.length - 1;
     createGallery(data.results);
     createModal(data.results);
   });
@@ -111,28 +166,35 @@ const createModal = (data) => {
 };
 
 const displayModal = (target) => {
-  const dataID = getDataID(target);
-  document.querySelector(`.modal-container[data-id='${dataID}']`).classList.remove('hidden');
+  setStateID(getDataID(target));
+  show(currentModal());
 };
 
 const hideModal = (target) => {
-  const dataID = getDataID(target);
-  document.querySelector(`.modal-container[data-id='${dataID}']`).classList.add('hidden');
+  hide(currentModal());
+  resetStateID();
 };
 
-/*** Modal Window Helpers  ***/
-// retrieves dataID. If not on current element, traverse up to find dataID
-const getDataID =  (target) => {
-  if (target.getAttribute('data-id')) {
-    return target.getAttribute('data-id');
-  } else if (target.parentNode.getAttribute('data-id')) {
-    return target.parentNode.getAttribute('data-id');
-  } else if (target.parentNode.parentNode.getAttribute('data-id')) {
-    return target.parentNode.parentNode.getAttribute('data-id');
-  } else if (target.parentNode.parentNode.parentNode.getAttribute('data-id')) {
-    return target.parentNode.parentNode.parentNode.getAttribute('data-id');
+const nextModal = () => {
+  if (state.filter === false) {
+    if (state.dataIDNum < state.lastIdx) {
+      hide(currentModal());
+      incrementStateID();
+      show(currentModal());
+    }
   }
 }
+
+const prevModal = () => {
+  if (state.filter === false) {
+    if (state.dataIDNum > 0) {
+      hide(currentModal());
+      decrementStateID();
+      show(currentModal());
+    }
+  }
+}
+
 
 /*** Event Listeners ***/
 
@@ -145,5 +207,11 @@ gallery.addEventListener('click', e => {
 body.addEventListener('click', e => {
   if (e.target.id === 'modal-close-btn' || e.target.className === "close-x") {
     hideModal(e.target);
+  }
+
+  if (e.target.id === 'modal-next') {
+    nextModal();
+  } else if (e.target.id === 'modal-prev') {
+    prevModal();
   }
 });
