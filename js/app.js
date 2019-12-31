@@ -6,6 +6,7 @@ const state = {
   results: [],
   dataIDStr: null,
   dataIDNum: null,
+  activeModal: false,
   lastIdx: null,
   filterResults: []
 };
@@ -46,11 +47,6 @@ const show = (node) => {
   node.classList.remove('hidden');
 }
 
-// gets current Modal based off of state.dataIDStr
-const currentModal = () => {
-  return document.querySelector(`.modal-container[data-id='${state.dataIDStr}']`);
-}
-
 /*** State Helpers  ***/
 // retrieves dataID. If not on current element, traverse up to find dataID
 const getDataID = (target) => {
@@ -68,11 +64,13 @@ const getDataID = (target) => {
 const setStateID = (dataIDStr) => {
   state.dataIDStr = dataIDStr;
   state.dataIDNum = parseInt(dataIDStr);
+  state.activeModal = true;
 }
 
 const resetStateID = () => {
   state.dataIDStr = null;
   state.dataIDNum = null;
+  state.activeModal = false;
 }
 
 const incrementStateID = () => {
@@ -157,7 +155,7 @@ const createModals = (data) => {
     const phoneLink = createElement('a', 'textContent', `${employee.cell}`, 'href', `tel:${employee.cell}`);
     phone.appendChild(phoneLink);
     const address = createElement('p', 'className', 'modal-text', 'textContent', `${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state} ${employee.location.postcode}`);
-    const birthday = createElement('p', 'className', 'modal-text', 'textContent', 'Birthday: 10/21/2015');
+    const birthday = createElement('p', 'className', 'modal-text', 'textContent', `Birthday: ${getDate(employee)}`);
     appendMultipleChildren(modalInfoContainer, img, name, email, city, hr, phone, address, birthday);
 
     const modelBtnContainer = createElement('div', 'className', 'modal-btn-container');
@@ -171,12 +169,15 @@ const createModals = (data) => {
   });
 };
 
+
+
+/*** Modal interaction ***/
 const displayModal = (target) => {
   setStateID(getDataID(target));
   show(currentModal());
 };
 
-const hideModal = (target) => {
+const hideModal = () => {
   hide(currentModal());
   resetStateID();
 };
@@ -195,6 +196,21 @@ const prevModal = () => {
     decrementStateID();
     show(currentModal());
   }
+}
+
+/*** Modal Helpers ***/
+// parse birthday in createModals
+const getDate = (employee) => {
+  const date = new Date(employee.dob.date);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const year = date.getYear();
+  return `${month}/${day}/${year}`;
+}
+
+// gets current Modal based off of state.dataIDStr
+const currentModal = () => {
+  return document.querySelector(`.modal-container[data-id='${state.dataIDStr}']`);
 }
 
 /*** Search/Filter ***/
@@ -266,7 +282,7 @@ gallery.addEventListener('click', e => {
 
 body.addEventListener('click', e => {
   if (e.target.id === 'modal-close-btn' || e.target.className === "close-x") {
-    hideModal(e.target);
+    hideModal();
   }
 
   if (e.target.id === 'modal-next') {
@@ -276,6 +292,19 @@ body.addEventListener('click', e => {
   }
 });
 
+// keyboard support for modals
+body.addEventListener('keyup', e => {
+  if (state.activeModal) {
+    const key = e.key;
+    if (key === "Escape") {
+      hideModal();
+    } else if (key === "ArrowLeft") {
+      prevModal();
+    } else if (key === "ArrowRight") {
+      nextModal();
+    }
+  }
+});
 /*** Initialize ***/
 fetchData('https://randomuser.me/api/?nat=us&results=12')
   .then(data => {
