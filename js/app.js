@@ -1,13 +1,13 @@
 /***  Globals ***/
 const gallery = document.getElementById('gallery');
 const body = document.querySelector('body');
+const searchContainer = document.querySelector('.search-container');
 const state = {
+  results: [],
   dataIDStr: null,
   dataIDNum: null,
-  filter: false,
   lastIdx: null,
-  filterFirstIdx: null,
-  filterLastIdx: null
+  filterResults: []
 };
 
 /*** General Helpers ***/
@@ -101,13 +101,6 @@ function checkStatus(response) {
   }
 }
 
-fetchData('https://randomuser.me/api/?nat=us&results=12')
-  .then(data => {
-    state.lastIdx = data.results.length - 1;
-    createGallery(data.results);
-    createModal(data.results);
-  });
-
 
 /*** User Directory ***/
 const createGallery = (data) => {
@@ -132,8 +125,15 @@ const createGallery = (data) => {
 
 }
 
+const wipeGalleryAndModals = () => {
+  [...gallery.children].forEach(child => gallery.removeChild(child));
+
+  [...document.querySelectorAll('.modal-container')].forEach(child => body.removeChild(child));
+
+}
+
 /*** Modal Window ***/
-const createModal = (data) => {
+const createModals = (data) => {
   data.forEach((employee, idx) => {
     const modalContainer = createElement('div', 'className', 'modal-container hidden');
     modalContainer.setAttribute('data-id', idx);
@@ -176,28 +176,78 @@ const hideModal = (target) => {
 };
 
 const nextModal = () => {
-  if (state.filter === false) {
-    if (state.dataIDNum < state.lastIdx) {
-      hide(currentModal());
-      incrementStateID();
-      show(currentModal());
-    }
+  if (state.dataIDNum < state.lastIdx) {
+    hide(currentModal());
+    incrementStateID();
+    show(currentModal());
   }
 }
 
 const prevModal = () => {
-  if (state.filter === false) {
-    if (state.dataIDNum > 0) {
-      hide(currentModal());
-      decrementStateID();
-      show(currentModal());
-    }
+  if (state.dataIDNum > 0) {
+    hide(currentModal());
+    decrementStateID();
+    show(currentModal());
   }
 }
 
+/*** Search/Filter ***/
+const createSearchForm = () => {
+  const form = createElement('form', 'action', '#', 'method', 'get');
+  
+  const searchInput = createElement('input', 'type', 'search', 'id', 'search-input', 'className', 'search-input', 'placeholder', 'Search by name...');
+  const searchSubmit = createElement('input', 'type', 'submit', 'value', 'Search', 'id', 'search-submit', 'className', 'search-submit');
+
+  appendMultipleChildren(form, searchInput, searchSubmit);
+  searchContainer.appendChild(form);
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const searchStr = document.getElementById('search-input').value;
+    filterResults(searchStr);
+  });
+
+  searchInput.addEventListener('keyup', e => {
+    const searchStr = e.target.value;
+    filterResults(searchStr);
+  });
+};
+
+const filterResults = (str) => {
+  const prevResults = state.filterResults;
+
+  const cleanedStr = str.toLowerCase().trim();
+  state.filterResults = state.results.filter(employee => {
+    const fullName = `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`
+    return fullName.includes(cleanedStr);
+  });
+
+  if (arraysMatch(prevResults, state.filterResults) === false) {
+    state.lastIdx = state.filterResults.length - 1;
+    wipeGalleryAndModals();
+    createGallery(state.filterResults);
+    createModals(state.filterResults);
+  }
+}
+
+/*** Search/Filter Helpers ***/
+// Checks if two arrays are the same. modified from https://gomakethings.com/how-to-check-if-two-arrays-are-equal-with-vanilla-js/
+const arraysMatch = (arr1, arr2) => {
+	// Check if the arrays are the same length
+	if (arr1.length !== arr2.length) {
+    return false;
+  }
+	// Check if all items exist and are in the same order
+	for (var i = 0; i < arr1.length; i++) {
+		if (arr1[i] !== arr2[i])  {
+      return false;
+    }
+	}
+	
+	return true;
+};
 
 /*** Event Listeners ***/
-
 gallery.addEventListener('click', e => {
   if (e.target.classList.value.includes("card")) {
     displayModal(e.target);
@@ -215,3 +265,14 @@ body.addEventListener('click', e => {
     prevModal();
   }
 });
+
+/*** Initialize ***/
+fetchData('https://randomuser.me/api/?nat=us&results=12')
+  .then(data => {
+    state.results = data.results;
+    state.lastIdx = data.results.length - 1;
+    createGallery(data.results);
+    createModals(data.results);
+  });
+
+createSearchForm();
