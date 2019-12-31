@@ -48,7 +48,6 @@ function checkStatus(response) {
 }
 
 fetchData('https://randomuser.me/api/?nat=us&results=12')
-  // .then(data => console.log(data));
   .then(data => {
     createGallery(data.results);
     createModal(data.results);
@@ -87,7 +86,7 @@ const createModal = (data) => {
     const modal = createElement('div', 'className', 'modal');
 
     const closeButton = createElement('button', 'id', 'modal-close-btn', 'className', 'modal-close-btn');
-    const strong = createElement('strong', 'textContent', 'X');
+    const strong = createElement('strong', 'className', 'close-x','textContent', 'X');
     closeButton.appendChild(strong);
 
     const modalInfoContainer = createElement('div', 'className', 'modal-info-container');
@@ -96,24 +95,55 @@ const createModal = (data) => {
     const email = createElement('p', 'className', 'modal-text', 'textContent', `${employee.email}`);
     const city = createElement('p', 'className', 'modal-text cap', 'textContent', `${employee.location.city}`);
     const phone = createElement('p', 'className', 'modal-text', 'textContent', `${employee.cell}`);
-    const address = createElement('p', 'className', 'modal-text', 'textContent', `${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state} ${employee.location.postcode}`); // need state abbrev
+    const address = createElement('p', 'className', 'modal-text', 'textContent', `${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state} ${employee.location.postcode}`); 
     const birthday = createElement('p', 'className', 'modal-text', 'textContent', 'Birthday: 10/21/2015');
     appendMultipleChildren(modalInfoContainer, img, name, email, city, phone, address, birthday);
 
-    appendMultipleChildren(modal, closeButton, modalInfoContainer);
+    const modelBtnContainer = createElement('div', 'className', 'modal-btn-container');
+    const modalPrev = createElement('button', 'id', 'modal-prev', 'className', 'modal-prev-btn', 'textContent', 'Prev');
+    const modalNext = createElement('button', 'id', 'modal-next', 'className', 'modal-next-btn', 'textContent', 'Next');
+    appendMultipleChildren(modelBtnContainer, modalPrev, modalNext);
+
+    appendMultipleChildren(modal, closeButton, modalInfoContainer, modelBtnContainer);
 
     createTree(body, modalContainer, modal);
   });
 };
 
-const displayModal = () => {
-
-
+const displayModal = (target) => {
+  const dataID = getDataID(target);
+  document.querySelector(`.modal-container[data-id='${dataID}']`).classList.remove('hidden');
 };
 
-const hideModal = () => {
-
-
+const hideModal = (target) => {
+  const dataID = getDataID(target);
+  document.querySelector(`.modal-container[data-id='${dataID}']`).classList.add('hidden');
 };
+
+/*** Modal Window Helpers  ***/
+// retrieves dataID. If not on current element, traverse up to find dataID
+const getDataID =  (target) => {
+  if (target.getAttribute('data-id')) {
+    return target.getAttribute('data-id');
+  } else if (target.parentNode.getAttribute('data-id')) {
+    return target.parentNode.getAttribute('data-id');
+  } else if (target.parentNode.parentNode.getAttribute('data-id')) {
+    return target.parentNode.parentNode.getAttribute('data-id');
+  } else if (target.parentNode.parentNode.parentNode.getAttribute('data-id')) {
+    return target.parentNode.parentNode.parentNode.getAttribute('data-id');
+  }
+}
 
 /*** Event Listeners ***/
+
+gallery.addEventListener('click', e => {
+  if (e.target.classList.value.includes("card")) {
+    displayModal(e.target);
+  }
+});
+
+body.addEventListener('click', e => {
+  if (e.target.id === 'modal-close-btn' || e.target.className === "close-x") {
+    hideModal(e.target);
+  }
+});
