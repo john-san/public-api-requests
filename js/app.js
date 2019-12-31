@@ -15,14 +15,14 @@ const createElement = (el, prop, val, prop2 = null, val2 = null, prop3 = null, v
   const element = document.createElement(el);
   element[prop] = val;
   if (prop2 !== null && val2 !== null) {
-     element[prop2] = val2;
+    element[prop2] = val2;
   }
   if (prop3 !== null && val3 !== null) {
     element[prop3] = val3;
   }
   if (prop4 !== null && val4 !== null) {
     element[prop4] = val4;
- }
+  }
   return element;
 }
 
@@ -46,13 +46,14 @@ const show = (node) => {
   node.classList.remove('hidden');
 }
 
+// gets current Modal based off of state.dataIDStr
 const currentModal = () => {
   return document.querySelector(`.modal-container[data-id='${state.dataIDStr}']`);
 }
 
 /*** State Helpers  ***/
 // retrieves dataID. If not on current element, traverse up to find dataID
-const getDataID =  (target) => {
+const getDataID = (target) => {
   if (target.getAttribute('data-id')) {
     return target.getAttribute('data-id');
   } else if (target.parentNode.getAttribute('data-id')) {
@@ -65,12 +66,12 @@ const getDataID =  (target) => {
 }
 
 const setStateID = (dataIDStr) => {
-  state.dataIDStr =  dataIDStr;
+  state.dataIDStr = dataIDStr;
   state.dataIDNum = parseInt(dataIDStr);
 }
 
 const resetStateID = () => {
-  state.dataIDStr =  null;
+  state.dataIDStr = null;
   state.dataIDNum = null;
 }
 
@@ -88,9 +89,9 @@ const decrementStateID = () => {
 /***  API Usage ***/
 function fetchData(url) {
   return fetch(url)
-          .then(checkStatus)
-          .then(res => res.json())
-          .catch(error => console.log('Looks like there was a problem!', error));
+    .then(checkStatus)
+    .then(res => res.json())
+    .catch(error => console.log('Looks like there was a problem!', error));
 }
 
 function checkStatus(response) {
@@ -103,6 +104,7 @@ function checkStatus(response) {
 
 
 /*** User Directory ***/
+// renders gallery(employee cards)
 const createGallery = (data) => {
   data.forEach((employee, idx) => {
     const card = createElement('div', 'className', 'card');
@@ -127,12 +129,11 @@ const createGallery = (data) => {
 
 const wipeGalleryAndModals = () => {
   [...gallery.children].forEach(child => gallery.removeChild(child));
-
   [...document.querySelectorAll('.modal-container')].forEach(child => body.removeChild(child));
-
 }
 
 /*** Modal Window ***/
+// renders hidden modals for each employee
 const createModals = (data) => {
   data.forEach((employee, idx) => {
     const modalContainer = createElement('div', 'className', 'modal-container hidden');
@@ -141,7 +142,7 @@ const createModals = (data) => {
     const modal = createElement('div', 'className', 'modal');
 
     const closeButton = createElement('button', 'id', 'modal-close-btn', 'className', 'modal-close-btn');
-    const strong = createElement('strong', 'className', 'close-x','textContent', 'X');
+    const strong = createElement('strong', 'className', 'close-x', 'textContent', 'X');
     closeButton.appendChild(strong);
 
     const modalInfoContainer = createElement('div', 'className', 'modal-info-container');
@@ -155,7 +156,7 @@ const createModals = (data) => {
     const phone = createElement('p', 'className', 'modal-text');
     const phoneLink = createElement('a', 'textContent', `${employee.cell}`, 'href', `tel:${employee.cell}`);
     phone.appendChild(phoneLink);
-    const address = createElement('p', 'className', 'modal-text', 'textContent', `${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state} ${employee.location.postcode}`); 
+    const address = createElement('p', 'className', 'modal-text', 'textContent', `${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state} ${employee.location.postcode}`);
     const birthday = createElement('p', 'className', 'modal-text', 'textContent', 'Birthday: 10/21/2015');
     appendMultipleChildren(modalInfoContainer, img, name, email, city, hr, phone, address, birthday);
 
@@ -197,28 +198,31 @@ const prevModal = () => {
 }
 
 /*** Search/Filter ***/
+// renders search form
 const createSearchForm = () => {
   const form = createElement('form', 'action', '#', 'method', 'get');
-  
+
   const searchInput = createElement('input', 'type', 'search', 'id', 'search-input', 'className', 'search-input', 'placeholder', 'Search by name...');
   const searchSubmit = createElement('input', 'type', 'submit', 'value', 'Search', 'id', 'search-submit', 'className', 'search-submit');
 
   appendMultipleChildren(form, searchInput, searchSubmit);
   searchContainer.appendChild(form);
 
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const searchStr = document.getElementById('search-input').value;
-    filterResults(searchStr);
-  });
-
-  searchInput.addEventListener('keyup', e => {
-    const searchStr = e.target.value;
-    filterResults(searchStr);
-  });
+  form.addEventListener('submit', filterHandler);
+  searchInput.addEventListener('keyup', filterHandler);
 };
 
-const filterResults = (str) => {
+// callback for search form events 
+const filterHandler = (e) => {
+  if (e.type === "submit") {
+    e.preventDefault();
+  }
+  const searchStr = document.getElementById('search-input').value;
+  filterEmployees(searchStr);
+}
+
+// filters employees based off of search input.
+const filterEmployees = (str) => {
   const prevResults = state.filterResults;
 
   const cleanedStr = str.toLowerCase().trim();
@@ -227,6 +231,7 @@ const filterResults = (str) => {
     return fullName.includes(cleanedStr);
   });
 
+  // only re-render when different results are found
   if (arraysMatch(prevResults, state.filterResults) === false) {
     state.lastIdx = state.filterResults.length - 1;
     wipeGalleryAndModals();
@@ -238,18 +243,18 @@ const filterResults = (str) => {
 /*** Search/Filter Helpers ***/
 // Checks if two arrays are the same. modified from https://gomakethings.com/how-to-check-if-two-arrays-are-equal-with-vanilla-js/
 const arraysMatch = (arr1, arr2) => {
-	// Check if the arrays are the same length
-	if (arr1.length !== arr2.length) {
+  // Check if the arrays are the same length
+  if (arr1.length !== arr2.length) {
     return false;
   }
-	// Check if all items exist and are in the same order
-	for (var i = 0; i < arr1.length; i++) {
-		if (arr1[i] !== arr2[i])  {
+  // Check if all items exist and are in the same order
+  for (var i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
       return false;
     }
-	}
-	
-	return true;
+  }
+
+  return true;
 };
 
 /*** Event Listeners ***/
