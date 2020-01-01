@@ -1,6 +1,7 @@
 /***  Globals ***/
 const gallery = document.getElementById('gallery');
 const body = document.querySelector('body');
+const header = document.querySelector('header');
 const searchContainer = document.querySelector('.search-container');
 const state = {
   results: [],
@@ -27,7 +28,7 @@ const createElement = (el, prop, val, prop2 = null, val2 = null, prop3 = null, v
   return element;
 }
 
-const appendMultipleChildren = (parent, ...children) => {
+const appendChildren = (parent, ...children) => {
   children.forEach(child => parent.appendChild(child));
 }
 
@@ -46,6 +47,33 @@ const hide = (node) => {
 const show = (node) => {
   node.classList.remove('hidden');
 }
+
+const remove = (node) => {
+  const parent = node.parentNode;
+  parent.removeChild(node);
+}
+
+const removeIfExists = (node) => {
+  if (node) {
+    const parent = node.parentNode;
+    parent.removeChild(node);
+  }
+}
+
+// modified animateCSS helper, from https://github.com/daneden/animate.css
+const animateCSS = (element, animationName, callback, speed = "fast") => {
+  const node = element;
+  node.classList.add('animated', animationName, speed);
+
+  function handleAnimationEnd() {
+    node.classList.remove('animated', animationName, speed);
+    node.removeEventListener('animationend', handleAnimationEnd);
+
+    if (typeof callback === 'function') callback()
+  }
+
+  node.addEventListener('animationend', handleAnimationEnd);
+};
 
 /*** State Helpers  ***/
 // retrieves dataID. If not on current element, traverse up to find dataID
@@ -85,21 +113,26 @@ const decrementStateID = () => {
 
 
 /***  API Usage ***/
-function fetchData(url) {
-  return fetch(url)
-    .then(checkStatus)
-    .then(res => res.json())
-    .catch(error => console.log('Looks like there was a problem!', error));
-}
-
-function checkStatus(response) {
-  if (response.ok) {
-    return Promise.resolve(response);
-  } else {
-    return Promise.reject(new Error(response.statusText));
+async function getJSON(url) {
+  try {
+    const response = await fetch(url);
+    return await response.json();
+  } catch (error) {
+    throw error;
   }
 }
 
+async function fetchData(url) {
+  return await getJSON(url);
+}
+
+// updates state & renders data
+function handleEmployeeData(data) {
+  state.results = data.results;
+  state.lastIdx = data.results.length - 1;
+  createGallery(data.results);
+  createModals(data.results);
+}
 
 /*** User Directory ***/
 // renders gallery(employee cards)
@@ -116,9 +149,9 @@ const createGallery = (data) => {
     const cardName = createElement('h3', 'id', 'name', 'className', 'card-name cap', 'textContent', `${employee.name.first} ${employee.name.last}`);
     const email = createElement('p', 'className', 'card-text', 'textContent', `${employee.email}`);
     const location = createElement('p', 'className', 'card-text cap', 'textContent', `${employee.location.city}, ${employee.location.state}`);
-    appendMultipleChildren(cardInfoContainer, cardName, email, location);
+    appendChildren(cardInfoContainer, cardName, email, location);
 
-    appendMultipleChildren(card, cardImgContainer, cardInfoContainer);
+    appendChildren(card, cardImgContainer, cardInfoContainer);
 
     gallery.appendChild(card);
   });
@@ -156,20 +189,18 @@ const createModals = (data) => {
     phone.appendChild(phoneLink);
     const address = createElement('p', 'className', 'modal-text', 'textContent', `${employee.location.street.number} ${employee.location.street.name}, ${employee.location.state} ${employee.location.postcode}`);
     const birthday = createElement('p', 'className', 'modal-text', 'textContent', `Birthday: ${getDate(employee)}`);
-    appendMultipleChildren(modalInfoContainer, img, name, email, city, hr, phone, address, birthday);
+    appendChildren(modalInfoContainer, img, name, email, city, hr, phone, address, birthday);
 
     const modelBtnContainer = createElement('div', 'className', 'modal-btn-container');
     const modalPrev = createElement('button', 'id', 'modal-prev', 'className', 'modal-prev-btn', 'textContent', 'Prev');
     const modalNext = createElement('button', 'id', 'modal-next', 'className', 'modal-next-btn', 'textContent', 'Next');
-    appendMultipleChildren(modelBtnContainer, modalPrev, modalNext);
+    appendChildren(modelBtnContainer, modalPrev, modalNext);
 
-    appendMultipleChildren(modal, closeButton, modalInfoContainer, modelBtnContainer);
+    appendChildren(modal, closeButton, modalInfoContainer, modelBtnContainer);
 
     createTree(body, modalContainer, modal);
   });
 };
-
-
 
 /*** Modal interaction ***/
 const displayModal = (target) => {
@@ -221,7 +252,7 @@ const createSearchForm = () => {
   const searchInput = createElement('input', 'type', 'search', 'id', 'search-input', 'className', 'search-input', 'placeholder', 'Search by name...');
   const searchSubmit = createElement('input', 'type', 'submit', 'value', 'Search', 'id', 'search-submit', 'className', 'search-submit');
 
-  appendMultipleChildren(form, searchInput, searchSubmit);
+  appendChildren(form, searchInput, searchSubmit);
   searchContainer.appendChild(form);
 
   form.addEventListener('submit', filterHandler);
@@ -239,21 +270,37 @@ const filterHandler = (e) => {
 
 // filters employees based off of search input.
 const filterEmployees = (str) => {
-  const prevResults = state.filterResults;
+  // if no results, show on screen text 'no-results'
+  function handleNoResults() {
+    if (state.filterResults.length === 0) {
+      if (!document.querySelector('#no-results')) {
+        showBodyMessage('No results found.', 'no-results')
+        const div = createElement('div', 'className', 'no-results', 'textContent', 'No results found')
+      }
+    } else {
+      cleanUpBodyMessage('no-results');
+    }
+  }
 
+  function renderResults() {
+    // only re-render when different results are found
+    if (arraysMatch(prevResults, state.filterResults) === false) {
+      state.lastIdx = state.filterResults.length - 1;
+      wipeGalleryAndModals();
+      createGallery(state.filterResults);
+      createModals(state.filterResults);
+    }
+  }
+
+  const prevResults = state.filterResults;
   const cleanedStr = str.toLowerCase().trim();
   state.filterResults = state.results.filter(employee => {
     const fullName = `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`
     return fullName.includes(cleanedStr);
   });
 
-  // only re-render when different results are found
-  if (arraysMatch(prevResults, state.filterResults) === false) {
-    state.lastIdx = state.filterResults.length - 1;
-    wipeGalleryAndModals();
-    createGallery(state.filterResults);
-    createModals(state.filterResults);
-  }
+  handleNoResults();
+  renderResults();
 }
 
 /*** Search/Filter Helpers ***/
@@ -305,13 +352,50 @@ body.addEventListener('keyup', e => {
     }
   }
 });
-/*** Initialize ***/
-fetchData('https://randomuser.me/api/?nat=us&results=12')
-  .then(data => {
-    state.results = data.results;
-    state.lastIdx = data.results.length - 1;
-    createGallery(data.results);
-    createModals(data.results);
-  });
 
-createSearchForm();
+/*** Alerts & Messages ***/
+const showAlert = (alertClassName, text, animationEntrance = 'slideInDown', animationExit = null) => {
+
+  const div = createElement('div', 'className', `alert alert-${alertClassName}`, 'textContent', text);
+  const body = document.querySelector('body');
+  const firstChild = body.firstElementChild;
+  body.insertBefore(div, firstChild);
+  animateCSS(div, animationEntrance);
+
+  if (animationExit !== null) {
+    cleanUpAlert(div, animationExit);
+  }
+}
+
+function cleanUpAlert(node, animationExit = 'fadeOut', speed = 2000) {
+  setTimeout(() => {
+    animateCSS(node, animationExit, () => {
+      body.removeChild(node);
+    });
+  }, speed);
+}
+
+const showBodyMessage = (text, id) => {
+  const div = createElement('div', 'textContent', text, 'id', id, 'className', 'body-message');
+  body.insertBefore(div, gallery);
+}
+
+const cleanUpBodyMessage = (id) => {
+  removeIfExists(document.getElementById(id));
+}
+
+/*** Initialize ***/
+document.addEventListener('DOMContentLoaded', () => {
+  showBodyMessage('Loading...', 'loading-message');
+
+  fetchData('https://randomuser.me/api/?nat=us&results=12')
+    .then(handleEmployeeData)
+    .then(() => showAlert('success', 'Data loaded successfully!', 'slideInDown', 'fadeOut'))
+    .catch(error => {
+      showAlert('danger', 'Something went wrong!', 'slideInDown', 'fadeOut');
+      console.error(error);
+    })
+    .finally(() => cleanUpBodyMessage('loading-message'));
+
+  createSearchForm();
+});

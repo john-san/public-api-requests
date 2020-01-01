@@ -84,9 +84,42 @@ header h1 {
 	background: var(--color-tertiary-light);
 	border: 1px solid rgba(50, 50, 50, 0.9);
 }
-
 /* ===================================== 
-   Helper
+   Alerts, borrowed from Bootstrap 4 https://getbootstrap.com/docs/4.0/components/alerts/
+======================================== */
+.alert {
+  position: relative;
+  padding: .75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: .25rem;
+}
+
+.alert-primary {
+	color: #004085;
+	background-color: #cce5ff;
+	border-color: #b8daff;
+}
+
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.alert-warning {
+	color: #856404;
+	background-color: #fff3cd;
+	border-color: #ffeeba;
+}
+/* ===================================== 
+   Helpers
 ======================================== */
 .hidden {
 	display: none;
@@ -260,6 +293,12 @@ header h1 {
 .modal-prev-btn:hover, .modal-next-btn:hover {
 	cursor: pointer;
 	background: var(--color-tertiary-dark);
+}
+
+.body-message {
+	margin-top: 15px;
+	font-size: 2rem;
+	font-weight: 700;
 }
 
 /* ===================================== 

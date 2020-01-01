@@ -11,8 +11,9 @@ In addition, there is a search bar at the top right of the gallery view that all
 **Extra Credit**
 
 1. JS: Added keyboard support(leftArrow, rightArrow, Escape) while in modal view.
-2. JS: Added clickable emails & phone numbers.
-3. CSS: Changed color scheme to use 3 colors.
-4. CSS: Added border & box-shadow around images.
-5. CSS: Updated button styles.
-6. CSS: Changed font-family to roboto.
+2. JS: Added helpful alerts(data loaded!/error!) and body messages(loading../no results found).
+3. JS: Added clickable emails & phone numbers.
+4. CSS: Changed color scheme to use 3 colors.
+5. CSS: Added border & box-shadow around images.
+6. CSS: Updated button styles.
+7. CSS: Changed font-family to roboto.
